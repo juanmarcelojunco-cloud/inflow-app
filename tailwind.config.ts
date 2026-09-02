@@ -9,12 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#050505", // True Black
-        card: "#0F0F12",       // Deep Obsidian
-        primary: "#C5A059",    // Champagne Gold (Signature Element)
-        secondary: "#8E8E93",  // Slate Grey
-        foreground: "#E5E5E5", // Soft White
-        muted: "#666666",      // Muted Grey
+        background: "#020617", // Slate 950 - Deep midnight navy
+        card: "#0F172A",       // Slate 900 - Sophisticated deep blue
+        primary: "#38BDF8",    // Sky 400 - Electric Blue for action
+        secondary: "#94A3B8",  // Slate 400 - Professional grey
+        foreground: "#F8FAFC", // Slate 50 - Crisp white
+        accent: "#818CF8",     // Indigo 400 - Premium accent
+        muted: "#475569",      // Slate 600 - Muted data
       },
       fontFamily: {
         serif: ["Fraunces", "serif"],

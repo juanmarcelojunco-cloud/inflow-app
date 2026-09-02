@@ -1,0 +1,67 @@
+-- Habilitar la extensión UUID
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 1. TABLA DE PERFILES (Cambiado a basado en Username para eliminar fricción de cuentas)
+CREATE TABLE public.profiles (
+    username TEXT PRIMARY KEY, -- El username ahora es la llave primaria
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    nombre_usuario TEXT NOT NULL,
+    tipo_ingreso TEXT DEFAULT 'variable' CHECK (tipo_ingreso IN ('semanal', 'quincenal', 'mensual', 'variable', 'minuto', 'hora', 'dia', 'ano')),
+    sueldo_fijo_monto NUMERIC DEFAULT 0,
+    moneda_preferida TEXT DEFAULT 'USD',
+    config_sobres JSONB NOT NULL DEFAULT '[]'::jsonb,
+    config_prestamos JSONB NOT NULL DEFAULT '{}'::jsonb,
+    preferencias_asesor JSONB NOT NULL DEFAULT '{"tono": "balanceado", "proactivo": true}'::jsonb
+);
+
+-- Habilitar RLS ( Simplificado para modo username)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acceso público por username" ON public.profiles FOR ALL USING (true);
+
+-- 2. TABLA de TRANSACCIONES
+CREATE TABLE public.transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username TEXT REFERENCES public.profiles(username) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    descripcion TEXT NOT NULL,
+    monto NUMERIC NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('ingreso', 'gasto', 'ahorro_meta')),
+    sobre_destino TEXT NOT NULL,
+    fecha_transaccion DATE DEFAULT CURRENT_DATE NOT NULL,
+    rango_tiempo TEXT DEFAULT 'unico' CHECK (rango_tiempo IN ('minuto', 'hora', 'dia', 'semana', 'quincena', 'mes', 'ano', 'unico')),
+    cantidad_tiempo NUMERIC DEFAULT 1,
+    estado_ingreso TEXT DEFAULT 'no_aplica' CHECK (estado_ingreso IN ('acumulado_trabajo', 'depositado_banco', 'no_aplica')),
+    offline_sync_id TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb
+);
+
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acceso público transacciones" ON public.transactions FOR ALL USING (true);
+
+-- 3. TABLA DE METAS
+CREATE TABLE public.savings_goals (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username TEXT REFERENCES public.profiles(username) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    nombre_meta TEXT NOT NULL,
+    monto_objetivo NUMERIC NOT NULL,
+    monto_actual NUMERIC DEFAULT 0 NOT NULL,
+    fecha_limite DATE,
+    activa BOOLEAN DEFAULT true NOT NULL,
+    cuenta_destino TEXT NOT NULL
+);
+
+ALTER TABLE public.savings_goals ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acceso público metas" ON public.savings_goals FOR ALL USING (true);
+
+-- 4. HISTORIAL DE CHAT
+CREATE TABLE public.chat_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username TEXT REFERENCES public.profiles(username) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+    content TEXT NOT NULL
+);
+
+ALTER TABLE public.chat_history ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acceso público chat" ON public.chat_history FOR ALL USING (true);

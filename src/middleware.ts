@@ -3,17 +3,15 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const username = request.cookies.get('inflow_user');
 
   // Rutas públicas
-  if (pathname === '/onboarding' || pathname === '/pin-lock') {
+  if (pathname === '/onboarding') {
     return NextResponse.next();
   }
 
-  // Simulación de check de sesión (en producción usar supabase.auth.getSession)
-  const session = request.cookies.get('sb-access-token');
-
-  if (!session && pathname !== '/onboarding') {
-    // Si no hay sesión, redirigir al onboarding o pin-lock
+  // Si no hay usuario, redirigir al onboarding
+  if (!username && pathname !== '/onboarding') {
     return NextResponse.redirect(new URL('/onboarding', request.url));
   }
 
