@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Geist_Sans } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import "../styles/globals.css";
 import PWAProvider from "@/components/PWAProvider";
 
@@ -8,7 +8,7 @@ const fraunces = Fraunces({
   variable: "--font-serif"
 });
 
-const geistSans = Geist_Sans({
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans"
 });
@@ -26,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="dark">
-      <body className={`${geistSans.variable} ${fraunces.variable} font-sans antialiased bg-background text-foreground`}>
+      <body className={`${inter.variable} ${fraunces.variable} font-sans antialiased bg-background text-foreground`}>
         <PWAProvider>
           {children}
         </PWAProvider>
