@@ -9,12 +9,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0A0A0C", // Negro obsidian profundo
-        card: "#121216",       // Gris carbón pulido
-        primary: "#10B981",    // Verde esmeralda
-        secondary: "#D97706",  // Latón / Ámbar
-        foreground: "#F4F4F5", // Crema muy claro
-        muted: "#A1A1AA",      // Gris pizarra
+        background: "#050505", // True Black
+        card: "#0F0F12",       // Deep Obsidian
+        primary: "#C5A059",    // Champagne Gold (Signature Element)
+        secondary: "#8E8E93",  // Slate Grey
+        foreground: "#E5E5E5", // Soft White
+        muted: "#666666",      // Muted Grey
       },
       fontFamily: {
         serif: ["Fraunces", "serif"],
