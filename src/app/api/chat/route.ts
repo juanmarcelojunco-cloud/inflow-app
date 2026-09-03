@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '@/lib/supabase';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const SYSTEM_PROMPT = `
 You are the inFlow AI Advisor, a high-end financial copilot for a luxury wealth management app.
@@ -59,26 +57,29 @@ export async function POST(req: Request) {
     `;
 
     let aiResponse;
-    if (process.env.ANTHROPIC_API_KEY) {
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20240620",
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT + "\n\nUser Context:\n" + context,
-        messages: [
-          ...history.map((m: any) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
-          { role: 'user', content: message }
-        ],
+    if (process.env.GEMINI_API_KEY) {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        systemInstruction: SYSTEM_PROMPT + "\n\nUser Context:\n" + context
       });
 
+      const chat = model.startChat({
+        history: history.map((m: any) => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }],
+        })),
+        generationConfig: {
+          responseMimeType: "application/json",
+        },
+      });
+
+      const result = await chat.sendMessage(message);
+      const responseText = result.response.text();
+
       try {
-        const firstBlock = response.content[0];
-        if (firstBlock.type === 'text') {
-          aiResponse = JSON.parse(firstBlock.text);
-        } else {
-          throw new Error("AI response was not text");
-        }
+        aiResponse = JSON.parse(responseText);
       } catch {
-        aiResponse = { reply: "Lo siento, tuve un problema procesando la respuesta. ¿Podrías repetirlo?", action: "query" };
+        aiResponse = { reply: "Lo siento, tuve un problema procesando la respuesta técnica. ¿Podrías repetirlo?", action: "query" };
       }
     } else {
       aiResponse = simulateAdvancedAI(message, profile);
@@ -95,7 +96,7 @@ function simulateAdvancedAI(message: string, profile: any) {
   const msg = message.toLowerCase();
   const currency = profile?.moneda_preferida || "USD";
 
-  if (msg.includes("gané") || msg.includes("gané") || msg.includes("ingreso")) {
+  if (msg.includes("gané") || msg.includes("ingreso")) {
     const amount = msg.match(/\d+/)?.[0] || "100";
     return {
       reply: `¡Excelente noticia, ${profile?.nombre_usuario || 'usuario'}! He registrado un ingreso de ${amount} ${currency} en tu flujo.`,

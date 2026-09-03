@@ -9,15 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#020617", // Deep Midnight Navy
-        card: "#0F172A",       // Sophisticated deep blue
-        primary: "#0EA5E9",    // Electric Blue
-        secondary: "#64748B",  // Professional Slate
-        foreground: "#F8FAFC", // Titanium White
-        accent: "#6366F1",     // Premium Indigo
-        surface: "#1E293B",    // Slate 800 for depth
-        muted: "#475569",      // Slate 600
-        border: "rgba(255, 255, 255, 0.08)",
+        background: "#0B0F14", // Modern SaaS Dark
+        card: "#131A22",       // Card background
+        border: "#1D2632",     // Card border
+        primary: "#3B82F6",    // Accent Blue
+        success: "#22C55E",    // Accent Green
+        warning: "#F59E0B",    // Accent Orange
+        error: "#EF4444",      // Accent Red
+        foreground: "#FFFFFF", // Primary Text
+        muted: "#8B95A7",      // Secondary Text
+        surface: "#1A222C",    // Slightly lighter surface
       },
       fontFamily: {
         serif: ["Fraunces", "serif"],
