@@ -71,7 +71,12 @@ export async function POST(req: Request) {
       });
 
       try {
-        aiResponse = JSON.parse(response.content[0].text as string);
+        const firstBlock = response.content[0];
+        if (firstBlock.type === 'text') {
+          aiResponse = JSON.parse(firstBlock.text);
+        } else {
+          throw new Error("AI response was not text");
+        }
       } catch {
         aiResponse = { reply: "Lo siento, tuve un problema procesando la respuesta. ¿Podrías repetirlo?", action: "query" };
       }
