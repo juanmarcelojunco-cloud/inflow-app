@@ -216,7 +216,7 @@ export default function StatsPage() {
                     className="h-full bg-accent"
                   />
                 </div >
-              </div >
+              </div>
             </div >
           </div >
 

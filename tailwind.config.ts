@@ -9,17 +9,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#020617", // Slate 950 - Deep midnight navy
-        card: "#0F172A",       // Slate 900 - Sophisticated deep blue
-        primary: "#38BDF8",    // Sky 400 - Electric Blue for action
-        secondary: "#94A3B8",  // Slate 400 - Professional grey
-        foreground: "#F8FAFC", // Slate 50 - Crisp white
-        accent: "#818CF8",     // Indigo 400 - Premium accent
-        muted: "#475569",      // Slate 600 - Muted data
+        background: "#020617", // Deep Midnight Navy
+        card: "#0F172A",       // Sophisticated deep blue
+        primary: "#0EA5E9",    // Electric Blue
+        secondary: "#64748B",  // Professional Slate
+        foreground: "#F8FAFC", // Titanium White
+        accent: "#6366F1",     // Premium Indigo
+        surface: "#1E293B",    // Slate 800 for depth
+        muted: "#475569",      // Slate 600
+        border: "rgba(255, 255, 255, 0.08)",
       },
       fontFamily: {
         serif: ["Fraunces", "serif"],
-        sans: ["Geist Sans", "sans-serif"],
+        sans: ["Inter", "sans-serif"],
+      },
+      animation: {
+        'shimmer': 'shimmer 2s linear infinite',
+        'float': 'float 6s ease-in-out infinite',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
       },
     },
   },

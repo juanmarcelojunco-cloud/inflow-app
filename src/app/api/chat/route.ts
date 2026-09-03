@@ -1,77 +1,142 @@
 import { NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+import { supabase } from '@/lib/supabase';
 
-// System prompt defining the AI's personality and logic for inFlow v3
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+});
+
 const SYSTEM_PROMPT = `
-You are the inFlow AI Advisor, a pro-active and balanced financial copilot.
-Your goal is to help users register income and expenses via natural language.
+You are the inFlow AI Advisor, a high-end financial copilot for a luxury wealth management app.
+Your tone is professional, precise, and proactive. You speak in the user's language (likely Spanish).
 
-CRITICAL RULES:
-1. TIME METRICS: Interpret time-based income.
-   Example: "Worked 120 minutes at $5/min" -> Total: $600, range: 'minuto', quantity: 120.
-   Units: 'minuto', 'hora', 'dia', 'semana', 'quincena', 'mes', 'ano', 'unico'.
+CORE MISSION:
+Interpret natural language to manage a user's financial flow. You must return a JSON object.
 
-2. FLOW STATE: Identify if money is 'acumulado_trabajo' (earned but not yet paid) or 'depositado_banco' (liquid in bank).
-   Example: "I earned $100 but they haven't paid me yet" -> estado_ingreso: 'acumulado_trabajo'.
-   Example: "I just got my payment of $100" -> estado_ingreso: 'depositado_banco'.
+FINANCIAL LOGIC:
+1. TIME METRICS: Handle inputs like "Worked 2 hours at $20/hr" -> monto: 40, rango_tiempo: 'hora', cantidad_tiempo: 2.
+2. FLOW STATE:
+   - 'acumulado_trabajo': Money earned but not yet received (accrued).
+   - 'depositado_banco': Money actually in the bank (liquid).
+3. ACTIONS:
+   - "insert_transaction": Create a new record.
+   - "update_state": Change accrued money to liquid.
+   - "query": Answer a question about their capital.
 
-3. OUTPUT FORMAT: You must ALWAYS respond in a JSON format that the system can parse.
-   {
-     "reply": "User-facing friendly message",
-     "action": "insert_transaction" | "update_state" | "query",
-     "data": {
-       "descripcion": string,
-       "monto": number,
-       "tipo": "ingreso" | "gasto" | "ahorro_meta",
-       "sobre_destino": string,
-       "rango_tiempo": string,
-       "cantidad_tiempo": number,
-       "estado_ingreso": "acumulado_trabajo" | "depositado_banco" | "no_aplica"
-     }
-   }
+OUTPUT FORMAT (Strict JSON):
+{
+  "reply": "Your professional response to the user",
+  "action": "insert_transaction" | "update_state" | "query",
+  "data": {
+    "descripcion": string,
+    "monto": number,
+    "tipo": "ingreso" | "gasto" | "ahorro_meta",
+    "sobre_destino": string,
+    "rango_tiempo": "minuto" | "hora" | "dia" | "semana" | "quincena" | "mes" | "ano" | "unico",
+    "cantidad_tiempo": number,
+    "estado_ingreso": "acumulado_trabajo" | "depositado_banco" | "no_aplica"
+  }
+}
 `;
 
 export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
-    // In a real implementation, you would call the Claude/Gemini API here.
-    // We simulate the AI interpretation for the first steps of development.
+    // 1. Identify User from Cookie/Header
+    const cookieHeader = req.headers.get('cookie');
+    const username = cookieHeader?.split('; ').find(row => row.startsWith('inflow_user='))?.split('=')[1];
 
-    let simulatedResponse;
-
-    if (message.toLowerCase().includes("minutos")) {
-      simulatedResponse = {
-        reply: "¡Perfecto! He registrado esos 120 minutos. Sumas $600 a tu flujo.",
-        action: "insert_transaction",
-        data: {
-          descripcion: "Trabajo por minutos",
-          monto: 600,
-          tipo: "ingreso",
-          sobre_destino: "Ingresos Generales",
-          rango_tiempo: "minuto",
-          cantidad_tiempo: 120,
-          estado_ingreso: "acumulado_trabajo"
-        }
-      };
-    } else if (message.toLowerCase().includes("deposito") || message.toLowerCase().includes("pagaron")) {
-      simulatedResponse = {
-        reply: "Excelente, he movido ese dinero a tu cuenta bancaria. ¡Ya puedes usarlo en tus sobres!",
-        action: "update_state",
-        data: {
-          descripcion: "Actualización de depósito",
-          estado_ingreso: "depositado_banco"
-        }
-      };
-    } else {
-      simulatedResponse = {
-        reply: "Te escucho. ¿Quieres registrar un ingreso, un gasto o revisar tus metas?",
-        action: "query",
-        data: {}
-      };
+    if (!username) {
+      return NextResponse.json({ reply: "No he podido identificar tu sesión. Por favor, inicia sesión nuevamente.", action: "query" });
     }
 
-    return NextResponse.json(simulatedResponse);
+    // 2. Fetch User Context for the AI
+    const { data: profile } = await supabase.from('profiles').select('*').eq('username', username).single();
+    const { data: txs } = await supabase.from('transactions').select('*').eq('username', username).order('created_at', { ascending: false }).limit(10);
+
+    const context = `
+      User Profile: ${JSON.stringify(profile)}
+      Recent Transactions: ${JSON.stringify(txs)}
+    `;
+
+    // 3. Call AI (with Fallback to Advanced Mock)
+    let aiResponse;
+    if (process.env.ANTHROPIC_API_KEY) {
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20240620",
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT + "\\n\\nUser Context:\\n" + context,
+        messages: [
+          ...history.map((m: any) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+          { role: 'user', content: message }
+        ],
+      });
+
+      try {
+        aiResponse = JSON.parse(response.content[0].text as string);
+      } catch {
+        aiResponse = { reply: "Lo siento, tuve un problema procesando la respuesta. ¿Podrías repetirlo?", action: "query" };
+      }
+    } else {
+      // ADVANCED MOCK ENGINE (When API key is missing)
+      aiResponse = simulateAdvancedAI(message, profile);
+    }
+
+    return NextResponse.json(aiResponse);
   } catch (error) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("AI Error:", error);
+    return NextResponse.json({ reply: "El núcleo financiero ha encontrado un error. Reintentando...", action: "query" }, { status: 500 });
   }
+}
+
+function simulateAdvancedAI(message: string, profile: any) {
+  const msg = message.toLowerCase();
+  const currency = profile?.moneda_preferida || "USD";
+
+  if (msg.includes("gané") || msg.includes("gané") || msg.includes("ingreso")) {
+    const amount = msg.match(/\\d+/)?.[0] || "100";
+    return {
+      reply: \`¡Excelente noticia, \${profile?.nombre_usuario || 'usuario'}! He registrado un ingreso de \${amount} \${currency} en tu flujo.\`,
+      action: "insert_transaction",
+      data: {
+        descripcion: "Ingreso registrado vía AI",
+        monto: parseFloat(amount),
+        tipo: "ingreso",
+        sobre_destino: "Ingresos Generales",
+        rango_tiempo: "unico",
+        cantidad_tiempo: 1,
+        estado_ingreso: "acumulado_trabajo"
+      }
+    };
+  }
+
+  if (msg.includes("gasté") || msg.includes("gasto")) {
+    const amount = msg.match(/\\d+/)?.[0] || "20";
+    return {
+      reply: \`Entendido. He registrado el gasto de \${amount} \${currency}. Recuerda mantener el equilibrio de tus sobres.\`,
+      action: "insert_transaction",
+      data: {
+        descripcion: "Gasto registrado vía AI",
+        monto: parseFloat(amount),
+        tipo: "gasto",
+        sobre_destino: "Gastos Varios",
+        rango_tiempo: "unico",
+        cantidad_tiempo: 1,
+        estado_ingreso: "no_aplica"
+      }
+    };
+  }
+
+  if (msg.includes("saldo") || msg.includes("cuánto")) {
+    return {
+      reply: \`Actualmente tienes un flujo activo. Puedes revisar el detalle exacto en tu Panel de Control.\`,
+      action: "query"
+    };
+  }
+
+  return {
+    reply: \`Te escucho, \${profile?.nombre_usuario || 'usuario'}. ¿Deseas registrar un nuevo flujo, actualizar un depósito o analizar tu capital?\`,
+    action: "query"
+  };
 }
