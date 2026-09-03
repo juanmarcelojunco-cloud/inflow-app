@@ -9,16 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0B0F14", // Modern SaaS Dark
-        card: "#131A22",       // Card background
-        border: "#1D2632",     // Card border
-        primary: "#3B82F6",    // Accent Blue
-        success: "#22C55E",    // Accent Green
-        warning: "#F59E0B",    // Accent Orange
-        error: "#EF4444",      // Accent Red
-        foreground: "#FFFFFF", // Primary Text
-        muted: "#8B95A7",      // Secondary Text
-        surface: "#1A222C",    // Slightly lighter surface
+        background: "#05070A", // The Void - deep, near-black
+        card: "#0A0D12",       // Subtle elevation
+        border: "#1A1F26",     // Ghost borders
+        primary: "#60A5FA",    // Electric Blue Accent
+        success: "#22C55E",    // Green
+        warning: "#F59E0B",    // Orange
+        error: "#EF4444",      // Red
+        foreground: "#F8FAFC", // High contrast off-white
+        muted: "#64748B",      // Steel gray
+        surface: "#0F1218",    // Subtle surface elevation
       },
       fontFamily: {
         serif: ["Fraunces", "serif"],
