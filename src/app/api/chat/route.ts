@@ -43,7 +43,6 @@ export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
-    // 1. Identify User from Cookie/Header
     const cookieHeader = req.headers.get('cookie');
     const username = cookieHeader?.split('; ').find(row => row.startsWith('inflow_user='))?.split('=')[1];
 
@@ -51,7 +50,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: "No he podido identificar tu sesión. Por favor, inicia sesión nuevamente.", action: "query" });
     }
 
-    // 2. Fetch User Context for the AI
     const { data: profile } = await supabase.from('profiles').select('*').eq('username', username).single();
     const { data: txs } = await supabase.from('transactions').select('*').eq('username', username).order('created_at', { ascending: false }).limit(10);
 
@@ -60,13 +58,12 @@ export async function POST(req: Request) {
       Recent Transactions: ${JSON.stringify(txs)}
     `;
 
-    // 3. Call AI (with Fallback to Advanced Mock)
     let aiResponse;
     if (process.env.ANTHROPIC_API_KEY) {
       const response = await anthropic.messages.create({
         model: "claude-3-5-sonnet-20240620",
         max_tokens: 1024,
-        system: SYSTEM_PROMPT + "\\n\\nUser Context:\\n" + context,
+        system: SYSTEM_PROMPT + "\n\nUser Context:\n" + context,
         messages: [
           ...history.map((m: any) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
           { role: 'user', content: message }
@@ -79,7 +76,6 @@ export async function POST(req: Request) {
         aiResponse = { reply: "Lo siento, tuve un problema procesando la respuesta. ¿Podrías repetirlo?", action: "query" };
       }
     } else {
-      // ADVANCED MOCK ENGINE (When API key is missing)
       aiResponse = simulateAdvancedAI(message, profile);
     }
 
@@ -95,9 +91,9 @@ function simulateAdvancedAI(message: string, profile: any) {
   const currency = profile?.moneda_preferida || "USD";
 
   if (msg.includes("gané") || msg.includes("gané") || msg.includes("ingreso")) {
-    const amount = msg.match(/\\d+/)?.[0] || "100";
+    const amount = msg.match(/\d+/)?.[0] || "100";
     return {
-      reply: \`¡Excelente noticia, \${profile?.nombre_usuario || 'usuario'}! He registrado un ingreso de \${amount} \${currency} en tu flujo.\`,
+      reply: `¡Excelente noticia, ${profile?.nombre_usuario || 'usuario'}! He registrado un ingreso de ${amount} ${currency} en tu flujo.`,
       action: "insert_transaction",
       data: {
         descripcion: "Ingreso registrado vía AI",
@@ -112,9 +108,9 @@ function simulateAdvancedAI(message: string, profile: any) {
   }
 
   if (msg.includes("gasté") || msg.includes("gasto")) {
-    const amount = msg.match(/\\d+/)?.[0] || "20";
+    const amount = msg.match(/\d+/)?.[0] || "20";
     return {
-      reply: \`Entendido. He registrado el gasto de \${amount} \${currency}. Recuerda mantener el equilibrio de tus sobres.\`,
+      reply: `Entendido. He registrado el gasto de ${amount} ${currency}. Recuerda mantener el equilibrio de tus sobres.`,
       action: "insert_transaction",
       data: {
         descripcion: "Gasto registrado vía AI",
@@ -130,13 +126,13 @@ function simulateAdvancedAI(message: string, profile: any) {
 
   if (msg.includes("saldo") || msg.includes("cuánto")) {
     return {
-      reply: \`Actualmente tienes un flujo activo. Puedes revisar el detalle exacto en tu Panel de Control.\`,
+      reply: `Actualmente tienes un flujo activo. Puedes revisar el detalle exacto en tu Panel de Control.`,
       action: "query"
     };
   }
 
   return {
-    reply: \`Te escucho, \${profile?.nombre_usuario || 'usuario'}. ¿Deseas registrar un nuevo flujo, actualizar un depósito o analizar tu capital?\`,
+    reply: `Te escucho, ${profile?.nombre_usuario || 'usuario'}. ¿Deseas registrar un nuevo flujo, actualizar un depósito o analizar tu capital?`,
     action: "query"
   };
 }
