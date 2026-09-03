@@ -21,7 +21,7 @@ export default function StatsPage() {
     }
     fetchUserData(username);
     fetchTransactions(username);
-  }, []);
+  }, [router]);
 
   const fetchUserData = async (username: string) => {
     const { data, error } = await supabase
@@ -66,7 +66,6 @@ export default function StatsPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground p-6 font-sans overflow-x-hidden">
-      {/* Top Navigation/Header */}
       <header className="flex justify-between items-center mb-12 pt-4 max-w-7xl mx-auto">
         <div className="space-y-2">
           <motion.h1
@@ -79,7 +78,7 @@ export default function StatsPage() {
           <p className="text-muted text-sm font-sans uppercase tracking-widest opacity-70">
             Wealth Intelligence Overview
           </p>
-        </div >
+        </div>
         <div className="flex items-center gap-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -92,12 +91,11 @@ export default function StatsPage() {
             }`}
           >
             {showProjected ? "Vista Proyectada" : "Vista Líquida"}
-          </button>
-        </div >
+          </motion.button>
+        </div>
       </header>
 
       <div className="max-w-7xl mx-auto space-y-12">
-        {/* Premium KPI Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -108,15 +106,15 @@ export default function StatsPage() {
             <div className="flex items-center justify-between">
               <div className="p-3 bg-primary/10 rounded-2xl text-primary">
                 <Wallet size={24} />
-              </div >
+              </div>
               <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted">Patrimonio</span>
-            </div >
+            </div>
             <div className="space-y-1">
               <p className="text-5xl font-serif font-bold text-foreground">
                 {userProfile?.moneda_preferida || "USD"} {calculateTotal().toLocaleString()}
               </p>
               <p className="text-xs text-muted font-medium">Capital total disponible</p>
-            </div >
+            </div>
           </motion.div>
 
           <motion.div
@@ -129,15 +127,15 @@ export default function StatsPage() {
             <div className="flex items-center justify-between">
               <div className="p-3 bg-accent/10 rounded-2xl text-accent">
                 <Zap size={24} />
-              </div >
+              </div>
               <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted">Proyectado</span>
-            </div >
+            </div>
             <div className="space-y-1">
               <p className="text-5xl font-serif font-bold text-foreground">
                 {userProfile?.moneda_preferida || "USD"} {calculateProjected().toLocaleString()}
               </p>
               <p className="text-xs text-muted font-medium">Ingresos en camino (acumulados)</p>
-            </div >
+            </div>
           </motion.div>
 
           <motion.div
@@ -150,27 +148,25 @@ export default function StatsPage() {
             <div className="flex items-center justify-between">
               <div className="p-3 bg-green-500/10 rounded-2xl text-green-400">
                 <TrendingUp size={24} />
-              </div >
+              </div>
               <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted">Rendimiento</span>
-            </div >
+            </div>
             <div className="space-y-1">
               <p className="text-5xl font-serif font-bold text-foreground">
                 +14.2%
               </p>
               <p className="text-xs text-muted font-medium">Crecimiento vs mes anterior</p>
-            </div >
+            </div>
           </motion.div>
-        </div >
+        </div>
 
-        {/* Analysis & Filters */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-          {/* Left Column: Filters & Quick Stats */}
           <div className="lg:col-span-1 space-y-8">
             <div className="glass p-6 rounded-[2.5rem] space-y-6">
               <div className="flex items-center gap-3 text-foreground font-medium">
                 <Filter size={18} className="text-primary" />
                 <span className="text-sm uppercase tracking-widest">Temporalidad</span>
-              </div >
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 {["dia", "semana", "mes", "ano"].map((f) => (
                   <button
@@ -185,42 +181,41 @@ export default function StatsPage() {
                     {f}
                   </button>
                 ))}
-              </div >
-            </div >
+              </div>
+            </div>
 
             <div className="glass p-6 rounded-[2.5rem] space-y-4">
               <div className="flex items-center gap-3 text-foreground font-medium">
                 <PieChart size={18} className="text-primary" />
                 <span className="text-sm uppercase tracking-widest">Distribución</span>
-              </div >
+              </div>
               <div className="space-y-3">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted">Líquido</span>
                   <span className="font-bold">{(calculateTotal() / (calculateTotal() + calculateProjected()) * 100 || 0).toFixed(1)}%</span>
-                </div >
+                </div>
                 <div className="h-1.5 w-full bg-background rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${(calculateTotal() / (calculateTotal() + calculateProjected()) * 100 || 0)}%` }}
                     className="h-full bg-primary"
                   />
-                </div >
+                </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted">Proyectado</span>
                   <span className="font-bold">{(calculateProjected() / (calculateTotal() + calculateProjected()) * 100 || 0).toFixed(1)}%</span>
-                </div >
+                </div>
                 <div className="h-1.5 w-full bg-background rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${(calculateProjected() / (calculateTotal() + calculateProjected()) * 100 || 0)}%` }}
                     className="h-full bg-accent"
                   />
-                </div >
-              </div >
-            </div >
-          </div >
+                </div>
+              </div>
+            </div>
+          </div>
 
-          {/* Right Column: Transactions List */}
           <div className="lg:col-span-3 space-y-6">
             <div className="flex items-center justify-between px-2">
               <h3 className="text-sm font-bold text-muted uppercase tracking-widest flex items-center gap-2">
@@ -229,22 +224,22 @@ export default function StatsPage() {
               <button className="text-xs text-primary hover:underline flex items-center gap-1 transition-all">
                 Ver todo <ChevronRight size={12} />
               </button>
-            </div >
+            </div>
 
             <AnimatePresence mode="popLayout">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 space-y-4">
                   <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
                   <p className="text-muted text-sm animate-pulse">Sincronizando con el núcleo financiero...</p>
-                </div >
+                </div>
               ) : transactions.length === 0 ? (
                 <div className="glass rounded-[3rem] p-20 text-center space-y-4">
                   <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto text-muted mb-4">
                     <Wallet size={32} />
-                  </div >
+                  </div>
                   <h4 className="text-xl font-serif">No hay flujos registrados</h4>
                   <p className="text-muted text-sm max-w-xs mx-auto">Tus transacciones aparecerán aquí una vez que comiences a registrar tus ingresos y gastos.</p>
-                </div >
+                </div>
               ) : (
                 <div className="grid gap-4">
                   {transactions.map((tx, i) => (
@@ -258,7 +253,7 @@ export default function StatsPage() {
                       <div className="flex items-center gap-5">
                         <div className={`p-3 rounded-2xl ${tx.tipo === 'ingreso' ? 'bg-primary/10 text-primary' : 'bg-red-500/10 text-red-400'}`}>
                           {tx.tipo === 'ingreso' ? <ArrowUpRight size={20} /> : <TrendingUp size={20} className="rotate-180" />}
-                        </div >
+                        </div>
                         <div className="space-y-1">
                           <p className="text-sm font-medium group-hover:text-primary transition-colors">{tx.descripcion}</p>
                           <div className="flex items-center gap-3">
@@ -269,23 +264,23 @@ export default function StatsPage() {
                             <span className="text-[10px] text-muted uppercase tracking-tighter">
                               {tx.estado_ingreso?.replace('_', ' ') || 'n/a'}
                             </span>
-                          </div >
-                        </div >
-                      </div >
+                          </div>
+                        </div>
+                      </div>
                       <div className="text-right">
                         <p className={`text-lg font-serif font-bold ${tx.tipo === 'ingreso' ? 'text-primary' : 'text-red-400'}`}>
                           {tx.tipo === 'ingreso' ? '+' : '-'}{tx.monto}
                         </p>
                         <p className="text-[10px] text-muted opacity-60">{new Date(tx.fecha_transaccion).toLocaleDateString()}</p>
-                      </div >
+                      </div>
                     </motion.div>
                   ))}
-                </div >
+                </div>
               )}
             </AnimatePresence>
-          </div >
-        </div >
-      </div >
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
